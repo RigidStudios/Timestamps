@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Discord Timestamp Generator</title>
+    </head>
+    <body>
+        Please Input your Date and Time in DD/MM/YYYY and HH:MM:SS formats<br />
+        <input id="date-input" placeholder="DD/MM/YYYY" />
+        <input id="time-input" placeholder="HH:MM:SS" /><br />
+        <select id="sel">
+            <option id="slash-date" value=1>
+                02/10/2021
+            </option>
+            <option id="medium-date" value=2>
+                2 October 2021
+            </option>
+            <option id="small-time" value=3>
+                09:30
+            </option>
+            <option id="large-time" value=4>
+                09:30:00
+            </option>
+            <option id="small-date-and-time" value=5>
+                2 October 2021 09:30
+            </option>
+            <option id="large-date-and-time" value=6 selected>
+                Saturday, 2 October 2021 09:30
+            </option>
+            <option id="since" value=7>
+                11 minutes ago
+            </option>
+            <option id="unix" value=8>
+                15556363
+            </option>
+        </select><br />
+        When you're done, press this button and paste your timestamp string into Discord: <button id="copy">Copy!</button>
+        <script>
+            const [ 
+                dateInput,
+                timeInput,
+                sel,
+                slashDate,
+                mediumDate,
+                smallTime,
+                largeTime,
+                smallDateAndTime,
+                largeDateAndTime,
+                since,
+                unix,
+                copy
+            ] = [
+                document.querySelector('#date-input'),
+                document.querySelector('#time-input'),
+                document.querySelector('#sel'),
+                document.querySelector('#slash-date'),
+                document.querySelector('#medium-date'),
+                document.querySelector('#small-time'),
+                document.querySelector('#large-time'),
+                document.querySelector('#small-date-and-time'),
+                document.querySelector('#large-date-and-time'),
+                document.querySelector('#since'),
+                document.querySelector('#unix'),
+                document.querySelector('#copy')
+            ]
+
+            // FIXME: This is bad code.
+            const monthNames = ["January", "February", "March", "April", "May", "June",
+                "July", "August", "September", "October", "November", "December"];
+            const dayNames = ["Sunday", "Monday", "Thursday", "Wednesday", "Thursday", "Friday", "Saturday" ];
+
+            let currTimestamp = Date.now();
+            let mDate = new Date(Date.now());
+
+            function updateAll() {
+                let [ hours, minutes, seconds ] = [ mDate.getHours(), mDate.getMinutes(), mDate.getSeconds() ];
+                let [ date, day, month, year ] = [ mDate.getDate(), mDate.getDay(), mDate.getMonth() + 1, mDate.getFullYear() ]
+
+                const diffTime = Date.now() - mDate;
+                const diffMinutes = Math.ceil(diffTime / (1000 * 60));
+
+                slashDate.innerHTML = `${date}/${month}/${year}`;
+                mediumDate.innerHTML = `${date} ${monthNames[month]} ${year}`;
+                smallTime.innerHTML = `${hours}:${minutes}`;
+                largeTime.innerHTML = `${hours}:${minutes}:${seconds}`;
+                smallDateAndTime.innerHTML = `${date} ${monthNames[month]} ${year} ${smallTime.innerHTML}`;
+                largeDateAndTime.innerHTML = `${dayNames[day]}, ${date} ${monthNames[month]} ${year} ${smallTime.innerHTML}`;
+                since.innerHTML = `${Math.sign(diffMinutes) === -1 ? `${Math.abs(diffMinutes)} minutes from now` : `${diffMinutes} minutes ago`}`;
+                unix.innerHTML = mDate.getTime();
+            }
+
+            dateInput.addEventListener('blur', () => {
+                let v = dateInput.value;
+                if (!v) return;
+                mDate.setDate(v.split('/')[0]);
+                mDate.setMonth(v.split('/')[1] - 1);
+                mDate.setFullYear(v.split('/')[2]);
+                updateAll();
+            });
+
+            timeInput.addEventListener('blur', () => {
+                let v = timeInput.value;
+                if (!v) return;
+                mDate.setHours(v.split(':')[0]);
+                mDate.setMinutes(v.split(':')[1]);
+                mDate.setSeconds(v.split(':')[2]);
+                updateAll();
+            });
+
+            function createNeat(small) {
+                return `<t:${Math.floor(mDate.getTime() / 1000)}:${small}>`;
+            }
+
+            function getSyntaxString() {
+                console.log(sel.value);
+                switch(parseInt(sel.value)) {
+                    case 1: return createNeat('d');
+                    case 2: return createNeat('D');
+                    case 3: return createNeat('t');
+                    case 4: return createNeat('T');
+                    case 5: return createNeat('f');
+                    case 6: return createNeat('F');
+                    case 7: return createNeat('R');
+                    default: return Math.floor(mDate.getTime() / 1000);
+                }
+            }
+
+            function copyToClipboard() {
+                if (!navigator.clipboard) throw Error('Get a modern browser you dingus!');
+                console.log(getSyntaxString());
+                navigator.clipboard.writeText(getSyntaxString()).then(() => console.log("Copied.")).catch(() => console.log("Copy failed."));
+            }
+
+            copy.addEventListener('click', () => copyToClipboard());
+
+            updateAll();
+        </script>
+    </body>
+</html>
